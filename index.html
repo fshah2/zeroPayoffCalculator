@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>0% APR Payoff Calculator</title>
+    <meta
+      name="description"
+      content="Calculate the minimum monthly payment to pay off a 0% APR credit card balance before your promo expires. Frontend-only and privacy-friendly."
+    />
+
+    <link rel="canonical" href="https://example.com/" />
+
+    <meta property="og:title" content="0% APR Payoff Calculator" />
+    <meta
+      property="og:description"
+      content="Calculate the minimum monthly payment to pay off your 0% APR balance before the promo ends. Frontend-only and privacy-friendly."
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://example.com/" />
+
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="0% APR Payoff Calculator" />
+    <meta
+      name="twitter:description"
+      content="Calculate the minimum monthly payment to pay off your 0% APR balance before the promo ends."
+    />
+
+    <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
+
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+
+  <body>
+    <main class="page">
+      <section class="card">
+        <header class="header headerCentered">
+          <div class="badge" aria-label="0 percent APR badge">0% APR</div>
+          <h1>0% APR Payoff Calculator</h1>
+          <p class="subhead">
+            Calculate the <strong>minimum monthly payment</strong> to pay off your balance
+            <strong>before</strong> your promo expires — fully in-browser, saved to
+            <code>localStorage</code>.
+          </p>
+        </header>
+
+        <form id="calcForm" novalidate>
+          <div class="grid">
+            <div class="field">
+              <label for="balance">Credit card balance (USD)</label>
+              <div class="inputWrap">
+                <span class="prefix">$</span>
+                <input
+                  id="balance"
+                  name="balance"
+                  type="number"
+                  inputmode="decimal"
+                  step="0.01"
+                  min="0.01"
+                  placeholder="e.g., 3500"
+                  required
+                  aria-describedby="balanceHint balanceError"
+                />
+              </div>
+              <p class="hint" id="balanceHint">Must be greater than 0.</p>
+              <p class="error" id="balanceError" aria-live="polite"></p>
+            </div>
+
+            <div class="field">
+              <label for="promoExpiry">0% APR promo expiration date</label>
+              <input
+                id="promoExpiry"
+                name="promoExpiry"
+                type="date"
+                required
+                aria-describedby="promoExpiryHint promoExpiryError"
+              />
+              <p class="hint" id="promoExpiryHint">
+                Payments must be <strong>strictly before</strong> this date.
+              </p>
+              <p class="error" id="promoExpiryError" aria-live="polite"></p>
+            </div>
+
+            <div class="field">
+              <label for="payDay">Monthly payment day (1–31)</label>
+              <input
+                id="payDay"
+                name="payDay"
+                type="number"
+                inputmode="numeric"
+                min="1"
+                max="31"
+                step="1"
+                placeholder="e.g., 31"
+                required
+                aria-describedby="payDayHint payDayError"
+              />
+              <p class="hint" id="payDayHint">
+                If a month has fewer days, payment occurs on the <strong>last day</strong> of that
+                month.
+              </p>
+              <p class="error" id="payDayError" aria-live="polite"></p>
+            </div>
+
+            <div class="field">
+              <label for="startMonth">Start payment month</label>
+              <input
+                id="startMonth"
+                name="startMonth"
+                type="month"
+                required
+                aria-describedby="startMonthHint startMonthError"
+              />
+              <p class="hint" id="startMonthHint">
+                Your first payment will be in this month on the chosen day.
+              </p>
+              <p class="error" id="startMonthError" aria-live="polite"></p>
+            </div>
+
+            <div class="field">
+              <label for="extraPayment">Extra payment per month (optional)</label>
+              <div class="inputWrap">
+                <span class="prefix">$</span>
+                <input
+                  id="extraPayment"
+                  name="extraPayment"
+                  type="number"
+                  inputmode="decimal"
+                  step="0.01"
+                  min="0"
+                  placeholder="e.g., 50"
+                  aria-describedby="extraPaymentHint extraPaymentError"
+                />
+              </div>
+              <p class="hint" id="extraPaymentHint">
+                Added on top of the minimum required payment (0% APR).
+              </p>
+              <p class="error" id="extraPaymentError" aria-live="polite"></p>
+            </div>
+          </div>
+
+          <div class="actions actionsCentered">
+            <button type="submit" class="btn primary">Calculate</button>
+            <button type="button" id="resetBtn" class="btn ghost">Reset</button>
+          </div>
+
+          <div class="toggleRow">
+            <div class="toggleLine">
+              <label class="switch">
+                <input type="checkbox" id="showSchedule" />
+                <span class="slider" aria-hidden="true"></span>
+              </label>
+              <div>
+                <div class="toggleTitle">Show monthly payment schedule</div>
+                <div class="hint tiny">Lists payment dates + remaining balance. Saved locally.</div>
+              </div>
+            </div>
+          </div>
+        </form>
+
+        <section id="results" class="results" aria-live="polite" aria-hidden="true">
+          <div class="resultsHeader">
+            <h2>Results</h2>
+            <div class="resultsHeaderRight">
+              <button
+                type="button"
+                id="copyLinkBtn"
+                class="btn tiny"
+                aria-describedby="copyLinkStatus"
+              >
+                Copy share link
+              </button>
+              <span class="pill">Saved locally</span>
+              <span id="copyLinkStatus" class="srOnly" aria-live="polite"></span>
+            </div>
+          </div>
+
+          <div class="resultsGrid">
+            <div class="resultItem accentA">
+              <div class="label">Minimum required monthly payment</div>
+              <div class="value" id="monthlyPaymentOut">$0.00</div>
+              <div class="mini">
+                Rounded <strong>up</strong> to the nearest cent so you finish by the deadline.
+              </div>
+            </div>
+
+            <div class="resultItem accentB">
+              <div class="label">Your total monthly payment</div>
+              <div class="value" id="totalMonthlyOut">$0.00</div>
+              <div class="mini" id="extraLineOut">Includes $0.00 extra per month.</div>
+            </div>
+
+            <div class="resultItem accentC">
+              <div class="label">Payments needed (window)</div>
+              <div class="value" id="numPaymentsOut">0</div>
+              <div class="mini" id="scheduleOut">—</div>
+            </div>
+
+            <div class="resultItem accentD">
+              <div class="label">Final payoff month</div>
+              <div class="value" id="finalMonthOut">—</div>
+              <div class="mini" id="finalDateOut">—</div>
+            </div>
+          </div>
+
+          <div class="note" id="noteOut"></div>
+
+          <div id="scheduleSection" class="scheduleSection" hidden>
+            <div class="scheduleHeader">
+              <h3>Monthly payment schedule (0% APR)</h3>
+              <span class="mini">Stops when remaining balance reaches $0.00</span>
+            </div>
+
+            <div class="tableWrap" role="region" aria-label="Monthly payment schedule table" tabindex="0">
+              <table class="scheduleTable">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Payment date</th>
+                    <th class="right">Payment</th>
+                    <th class="right">Remaining</th>
+                  </tr>
+                </thead>
+                <tbody id="scheduleBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+      </section>
+
+      <footer class="footer">
+        <p>Estimates only. Assumes a 0% APR for the entire period and equal monthly payments.
+Confirm details with your card issuer: promo terms and posting dates may vary.</p>
+      </footer>
+    </main>
+
+    <script src="./script.js"></script>
+  </body>
+</html>
