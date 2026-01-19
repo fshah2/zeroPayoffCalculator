@@ -1,43 +1,94 @@
-# 0% APR Payoff Calculator (Frontend-only)
+# 0% APR Payoff Calculator
 
-A zero-backend, privacy-friendly calculator that estimates the **minimum monthly payment** needed to pay off a credit card balance **before** a 0% APR promotional expiration date.
+A frontend-only, privacy-friendly calculator that estimates how much you need to pay each month to fully pay off a credit card balance before a 0% APR promotional period expires.
 
-- **Runs entirely in the browser** (no server, no database)
-- **No tracking, no cookies**
-- Persists inputs locally via `localStorage`
+There is no backend, no database, and no tracking. Everything runs entirely in your browser.
 
-## How it works
+---
+
+## What this tool does
 
 You enter:
-- Balance
-- Promo expiration date
-- **Monthly payment day (1–31)**
+- Credit card balance
+- 0% APR promo expiration date
+- Monthly payment day (1–31)
 - Start payment month
-- Optional extra payment per month
+- Optional extra monthly payment
 
-The app:
-1. Finds the last payment date that is **strictly before** the promo expiration date.
-2. Counts how many monthly payments fit in that window.
-3. Computes the minimum required payment (rounded **up** to the nearest cent) so the balance reaches $0 within the eligible payment window.
+The calculator:
+- Determines the last payment date that is strictly before the promo expiration
+- Counts how many monthly payments fit in that window
+- Calculates the minimum required monthly payment (rounded up to the nearest cent)
+- Optionally shows a month-by-month payment schedule
 
-### Payment day rule (1–31)
+All calculations assume a 0% APR (no interest).
 
-If you choose a day that doesn’t exist in some months (e.g., **31** in February), the payment date is clamped to the **last day of that month**.
+---
 
-### Strict-before rule
+## Payment day rules (1–31)
 
-If the promo expires on a day that would otherwise be a payment date, that payment is **not allowed** (must be before). The last eligible payment becomes the prior month’s payment date.
-
-## Shareable URLs
-
-When you calculate, the page URL updates with query parameters so you can share a prefilled calculator state.
-
-Parameters:
-- `b` balance (e.g. `3500.25`)
-- `e` promo expiry date (`YYYY-MM-DD`)
-- `d` payment day (`1`–`31`)
-- `s` start month (`YYYY-MM`)
-- `x` extra payment (optional)
-- `t` show schedule toggle (`1` or `0`)
+If you choose a payment day that does not exist in a given month (for example, the 31st in February), the payment date is automatically moved to the last day of that month.
 
 Example:
+- Payment day: 31
+- February payment date: February 28 (or 29 in leap years)
+
+---
+
+## Promo expiration rule (important)
+
+Payments must occur strictly before the promo expiration date.
+
+If the promo expires on a day that would normally be a payment date, that payment is not allowed and the previous month becomes the final eligible payment.
+
+Example:
+- Promo expires: March 15
+- Payment day: 15
+- The March payment is excluded
+- The February payment is the final eligible payment
+
+---
+
+## Accuracy and rounding
+
+- All currency math is done using integer cents (not floating-point dollars)
+- Monthly payments are rounded up so the balance reaches $0.00 within the allowed window
+- The payment schedule stops once the remaining balance reaches $0.00
+
+---
+
+## Monthly payment schedule
+
+You can toggle “Show monthly payment schedule” on or off at any time.
+
+The schedule:
+- Lists each payment date
+- Shows the payment amount and remaining balance
+- Updates correctly when the toggle is enabled or disabled
+- Is saved locally and included in shareable links
+
+---
+
+## Shareable links
+
+After calculating, the page URL updates with parameters representing the current inputs. This allows you to bookmark or share a prefilled calculator state.
+
+Example format:
+
+?b=3500&e=2026-12-15&d=31&s=2026-03&x=50&t=1
+
+Notes:
+- Anyone with the link can see the values in the URL
+- Do not share links containing sensitive financial information
+
+---
+
+## Disclaimer
+
+Estimates only.
+
+This calculator assumes a 0% APR for the entire period and equal monthly payments made on the selected day.
+
+Payment posting dates, minimums, fees, and promo terms vary by card issuer. Always confirm details with your credit card issuer.
+
+
