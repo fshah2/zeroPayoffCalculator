@@ -8,6 +8,8 @@
   const promoExpiryEl = document.getElementById("promoExpiry");
   const payDayEl = document.getElementById("payDay");
   const startMonthEl = document.getElementById("startMonth");
+  const startMonthSelectEl = document.getElementById("startMonthSelect");
+  const startYearSelectEl = document.getElementById("startYearSelect");
   const extraPaymentEl = document.getElementById("extraPayment");
   const resetBtn = document.getElementById("resetBtn");
 
@@ -66,6 +68,37 @@
     return Math.floor((n + d - 1) / d);
   }
 
+  function pad2(n) {
+    return String(n).padStart(2, "0");
+  }
+
+  function monthYearToString(year, monthIndex) {
+    return `${year}-${pad2(monthIndex + 1)}`;
+  }
+
+  function syncStartMonthHidden() {
+    const y = Number(startYearSelectEl?.value);
+    const m = Number(startMonthSelectEl?.value);
+
+    if (Number.isInteger(y) && Number.isInteger(m) && m >= 1 && m <= 12) {
+      startMonthEl.value = `${y}-${pad2(m)}`;
+    } else {
+      startMonthEl.value = "";
+    }
+  }
+
+  function setStartMonthSelectsFromString(yyyyMm) {
+    const parsed = parseMonthInput(yyyyMm);
+    if (!parsed) {
+      if (startMonthSelectEl) startMonthSelectEl.value = "";
+      if (startYearSelectEl) startYearSelectEl.value = "";
+      syncStartMonthHidden();
+      return;
+    }
+    if (startMonthSelectEl) startMonthSelectEl.value = String(parsed.monthIndex + 1);
+    if (startYearSelectEl) startYearSelectEl.value = String(parsed.year);
+    syncStartMonthHidden();
+  }
 
   function parseDateInput(value) {
     if (!value || typeof value !== "string") return null;
@@ -129,7 +162,21 @@
 
   function focusFirstInvalid() {
     const first = form.querySelector("[aria-invalid='true']");
-    if (first && typeof first.focus === "function") first.focus();
+    if (!first) return;
+
+    // If our hidden YYYY-MM field is invalid, focus the visible dropdowns.
+    if (first === startMonthEl) {
+      if (startMonthSelectEl && typeof startMonthSelectEl.focus === "function") {
+        startMonthSelectEl.focus();
+        return;
+      }
+      if (startYearSelectEl && typeof startYearSelectEl.focus === "function") {
+        startYearSelectEl.focus();
+        return;
+      }
+    }
+
+    if (typeof first.focus === "function") first.focus();
   }
 
   function clearAllErrors() {
@@ -319,7 +366,7 @@
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
     } catch {
-  
+      // ignore
     }
   }
 
@@ -333,17 +380,63 @@
     }
   }
 
+  function initStartMonthDropdowns() {
+    if (!startMonthSelectEl || !startYearSelectEl) return;
+
+    // Month options
+    startMonthSelectEl.innerHTML = "";
+    const mPlaceholder = document.createElement("option");
+    mPlaceholder.value = "";
+    mPlaceholder.textContent = "Month";
+    startMonthSelectEl.appendChild(mPlaceholder);
+
+    const monthFmt = new Intl.DateTimeFormat(undefined, { month: "long" });
+    for (let i = 0; i < 12; i++) {
+      const opt = document.createElement("option");
+      opt.value = String(i + 1);
+      opt.textContent = monthFmt.format(new Date(2000, i, 1));
+      startMonthSelectEl.appendChild(opt);
+    }
+
+    // Year options
+    startYearSelectEl.innerHTML = "";
+    const yPlaceholder = document.createElement("option");
+    yPlaceholder.value = "";
+    yPlaceholder.textContent = "Year";
+    startYearSelectEl.appendChild(yPlaceholder);
+
+    const currentYear = new Date().getFullYear();
+    const minYear = currentYear - 1;
+    const maxYear = currentYear + 15;
+    for (let y = minYear; y <= maxYear; y++) {
+      const opt = document.createElement("option");
+      opt.value = String(y);
+      opt.textContent = String(y);
+      startYearSelectEl.appendChild(opt);
+    }
+
+    const onChange = () => {
+      syncStartMonthHidden();
+      setFieldError(startMonthEl, startMonthErr, "");
+    };
+
+    startMonthSelectEl.addEventListener("change", onChange);
+    startYearSelectEl.addEventListener("change", onChange);
+    syncStartMonthHidden();
+  }
+
   function applyStateToForm(state) {
     if (!state) return;
     if (typeof state.balance === "string") balanceEl.value = state.balance;
     if (typeof state.promoExpiry === "string") promoExpiryEl.value = state.promoExpiry;
     if (typeof state.payDay === "string") payDayEl.value = state.payDay;
-    if (typeof state.startMonth === "string") startMonthEl.value = state.startMonth;
+    if (typeof state.startMonth === "string") setStartMonthSelectsFromString(state.startMonth);
     if (typeof state.extraPayment === "string") extraPaymentEl.value = state.extraPayment;
     if (typeof state.showSchedule === "boolean") showScheduleEl.checked = state.showSchedule;
   }
 
   function getStateFromForm() {
+    syncStartMonthHidden();
     return {
       balance: balanceEl.value.trim(),
       promoExpiry: promoExpiryEl.value.trim(),
@@ -359,6 +452,8 @@
     promoExpiryEl.value = "";
     payDayEl.value = "";
     startMonthEl.value = "";
+    if (startMonthSelectEl) startMonthSelectEl.value = "";
+    if (startYearSelectEl) startYearSelectEl.value = "";
     extraPaymentEl.value = "";
     showScheduleEl.checked = false;
   }
@@ -370,6 +465,7 @@
     try {
       localStorage.removeItem(STORAGE_KEY);
     } catch {
+      // ignore
     }
     writeShareUrlToAddressBar("");
     copyLinkStatus.textContent = "";
@@ -377,6 +473,9 @@
 
   function validateInputs() {
     clearAllErrors();
+
+    // Ensure hidden YYYY-MM value reflects the visible dropdowns.
+    syncStartMonthHidden();
 
     const balanceCents = parseMoneyToCents(balanceEl.value);
     const extraCentsRaw = parseMoneyToCents(extraPaymentEl.value);
@@ -562,9 +661,8 @@
     });
   });
 
-  // -------------------------
-  // Init: URL params > localStorage
-  // -------------------------
+  initStartMonthDropdowns();
+
   const fromUrl = readShareParamsFromUrl();
   if (fromUrl) {
     applyStateToForm(fromUrl);

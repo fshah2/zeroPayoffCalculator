@@ -10,7 +10,7 @@
       content="Calculate the minimum monthly payment to pay off a 0% APR credit card balance before your promo expires. Frontend-only and privacy-friendly."
     />
 
-    <link rel="canonical" href="https://example.com/" />
+    <link rel="canonical" href="https://zeropayoffcalculator.netlify.app/" />
 
     <meta property="og:title" content="0% APR Payoff Calculator" />
     <meta
@@ -18,7 +18,7 @@
       content="Calculate the minimum monthly payment to pay off your 0% APR balance before the promo ends. Frontend-only and privacy-friendly."
     />
     <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://example.com/" />
+    <meta property="og:url" content="https://zeropayoffcalculator.netlify.app/" />
 
     <meta name="twitter:card" content="summary" />
     <meta name="twitter:title" content="0% APR Payoff Calculator" />
@@ -105,13 +105,24 @@
 
             <div class="field">
               <label for="startMonth">Start payment month</label>
-              <input
-                id="startMonth"
-                name="startMonth"
-                type="month"
-                required
-                aria-describedby="startMonthHint startMonthError"
-              />
+
+              <div class="monthYearRow" role="group" aria-label="Start payment month">
+                <label class="srOnly" for="startMonthSelect">Start month</label>
+                <select
+                  id="startMonthSelect"
+                  class="monthYearSelect"
+                  aria-describedby="startMonthHint startMonthError"
+                ></select>
+
+                <label class="srOnly" for="startYearSelect">Start year</label>
+                <select
+                  id="startYearSelect"
+                  class="monthYearSelect"
+                  aria-describedby="startMonthHint startMonthError"
+                ></select>
+              </div>
+              <input id="startMonth" name="startMonth" type="hidden" required />
+
               <p class="hint" id="startMonthHint">
                 Your first payment will be in this month on the chosen day.
               </p>
@@ -212,7 +223,12 @@
               <span class="mini">Stops when remaining balance reaches $0.00</span>
             </div>
 
-            <div class="tableWrap" role="region" aria-label="Monthly payment schedule table" tabindex="0">
+            <div
+              class="tableWrap"
+              role="region"
+              aria-label="Monthly payment schedule table"
+              tabindex="0"
+            >
               <table class="scheduleTable">
                 <thead>
                   <tr>
@@ -230,8 +246,10 @@
       </section>
 
       <footer class="footer">
-        <p>Estimates only. Assumes a 0% APR for the entire period and equal monthly payments.
-Confirm details with your card issuer: promo terms and posting dates may vary.</p>
+        <p>
+          Estimates only. Assumes a 0% APR for the entire period and equal monthly payments. Confirm
+          details with your card issuer: promo terms and posting dates may vary.
+        </p>
       </footer>
     </main>
 
